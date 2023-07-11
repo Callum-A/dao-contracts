@@ -18,7 +18,7 @@ use dao_testing::{ShouldExecute, TestSingleChoiceVote};
 use dao_voting::{
     deposit::{CheckedDepositInfo, UncheckedDepositInfo},
     pre_propose::{PreProposeInfo, ProposalCreationPolicy},
-    proposal::{SingleChoiceProposeMsg as ProposeMsg, MAX_PROPOSAL_SIZE},
+    proposal::{AllowedProposalTypes, SingleChoiceProposeMsg as ProposeMsg, MAX_PROPOSAL_SIZE},
     reply::{
         failed_pre_propose_module_hook_id, mask_proposal_execution_proposal_id,
         mask_proposal_hook_index, mask_vote_hook_index,
@@ -589,6 +589,7 @@ fn test_update_config() {
                 allow_revoting: false,
                 dao: core_addr.to_string(),
                 close_proposal_on_execution_failure: false,
+                allowed_proposal_types: AllowedProposalTypes::All,
             })
             .unwrap(),
             funds: vec![],
@@ -617,6 +618,7 @@ fn test_update_config() {
             allow_revoting: false,
             dao: core_addr.clone(),
             close_proposal_on_execution_failure: false,
+            allowed_proposal_types: AllowedProposalTypes::All,
         }
     );
 
@@ -635,6 +637,7 @@ fn test_update_config() {
                 allow_revoting: false,
                 dao: core_addr.to_string(),
                 close_proposal_on_execution_failure: false,
+                allowed_proposal_types: AllowedProposalTypes::All,
             },
             &[],
         )
@@ -1197,6 +1200,7 @@ fn test_allow_revoting_config_changes() {
             allow_revoting: false,
             dao: core_addr.to_string(),
             close_proposal_on_execution_failure: false,
+            allowed_proposal_types: AllowedProposalTypes::All,
         },
         &[],
     )
@@ -1499,6 +1503,7 @@ fn test_proposal_count_initialized_to_zero() {
             allow_revoting: false,
             pre_propose_info,
             close_proposal_on_execution_failure: true,
+            allowed_proposal_types: AllowedProposalTypes::All,
         },
         Some(vec![
             Cw20Coin {
@@ -1786,6 +1791,7 @@ fn test_migrate_from_v1() {
             allow_revoting: false,
             dao: core_addr.clone(),
             close_proposal_on_execution_failure: true,
+            allowed_proposal_types: AllowedProposalTypes::All,
         }
     );
 
@@ -1919,6 +1925,7 @@ fn test_execution_failed() {
             dao: config.dao.into_string(),
             // Disable.
             close_proposal_on_execution_failure: false,
+            allowed_proposal_types: AllowedProposalTypes::All,
         },
         &[],
     )
@@ -2683,4 +2690,103 @@ fn test_proposal_count_goes_up() {
 
     let next = query_next_proposal_id(&app, &proposal_module);
     assert_eq!(next, 3);
+}
+
+#[test]
+fn test_proposal_type_text_valid() {
+    let mut app = App::default();
+    let mut instantiate = get_default_non_token_dao_proposal_module_instantiate(&mut app);
+    instantiate.allowed_proposal_types = AllowedProposalTypes::Text;
+    let core_addr = instantiate_with_staking_active_threshold(
+        &mut app,
+        instantiate,
+        None,
+        Some(ActiveThreshold::AbsoluteCount {
+            count: Uint128::new(100),
+        }),
+    );
+    let gov_token = query_dao_token(&app, &core_addr);
+    let proposal_module = query_single_proposal_module(&app, &core_addr);
+    let voting_module = query_voting_module(&app, &core_addr);
+
+    let staking_contract: Addr = app
+        .wrap()
+        .query_wasm_smart(
+            voting_module,
+            &dao_voting_cw20_staked::msg::QueryMsg::StakingContract {},
+        )
+        .unwrap();
+
+    let msg = cw20::Cw20ExecuteMsg::Send {
+        contract: staking_contract.to_string(),
+        amount: Uint128::new(20_000_000),
+        msg: to_binary(&cw20_stake::msg::ReceiveMsg::Stake {}).unwrap(),
+    };
+    app.execute_contract(Addr::unchecked(CREATOR_ADDR), gov_token, &msg, &[])
+        .unwrap();
+    app.update_block(next_block);
+
+    make_proposal(&mut app, &proposal_module, CREATOR_ADDR, vec![]);
+}
+
+#[test]
+fn test_proposal_type_text_invalid() {
+    let mut app = App::default();
+    let mut instantiate = get_default_non_token_dao_proposal_module_instantiate(&mut app);
+    instantiate.allowed_proposal_types = AllowedProposalTypes::Text;
+    let core_addr = instantiate_with_staking_active_threshold(
+        &mut app,
+        instantiate,
+        None,
+        Some(ActiveThreshold::AbsoluteCount {
+            count: Uint128::new(100),
+        }),
+    );
+    let gov_token = query_dao_token(&app, &core_addr);
+    let proposal_module = query_single_proposal_module(&app, &core_addr);
+    let voting_module = query_voting_module(&app, &core_addr);
+
+    let staking_contract: Addr = app
+        .wrap()
+        .query_wasm_smart(
+            voting_module,
+            &dao_voting_cw20_staked::msg::QueryMsg::StakingContract {},
+        )
+        .unwrap();
+
+    let proposal_creation_policy = query_creation_policy(&app, &proposal_module);
+    let pre_propose = match proposal_creation_policy {
+        ProposalCreationPolicy::Anyone {} => panic!("expected a pre-propose module"),
+        ProposalCreationPolicy::Module { addr } => addr,
+    };
+
+    let msg = cw20::Cw20ExecuteMsg::Send {
+        contract: staking_contract.to_string(),
+        amount: Uint128::new(20_000_000),
+        msg: to_binary(&cw20_stake::msg::ReceiveMsg::Stake {}).unwrap(),
+    };
+    app.execute_contract(Addr::unchecked(CREATOR_ADDR), gov_token, &msg, &[])
+        .unwrap();
+    app.update_block(next_block);
+
+    // Proposal has CosmosMsg attached, it should be rejected
+    let err = app
+        .execute_contract(
+            pre_propose,
+            proposal_module,
+            &ExecuteMsg::Propose(ProposeMsg {
+                title: "title".to_string(),
+                description: "description".to_string(),
+                msgs: vec![CosmosMsg::Bank(BankMsg::Send {
+                    to_address: CREATOR_ADDR.to_string(),
+                    amount: coins(100, "ujuno"),
+                })],
+                proposer: None,
+            }),
+            &[],
+        )
+        .unwrap_err()
+        .downcast()
+        .unwrap();
+    assert!(matches!(err, ContractError::Unauthorized {}));
 }

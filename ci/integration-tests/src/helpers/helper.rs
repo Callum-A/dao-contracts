@@ -6,6 +6,7 @@ use cw20::Cw20Coin;
 use cw_utils::Duration;
 use dao_interface::query::DumpStateResponse;
 use dao_interface::state::{Admin, ModuleInstantiateInfo};
+use dao_voting::proposal::AllowedProposalTypes;
 use dao_voting::{
     deposit::{DepositRefundPolicy, DepositToken, UncheckedDepositInfo},
     pre_propose::{PreProposeInfo, ProposalCreationPolicy},
@@ -72,6 +73,7 @@ pub fn create_dao(
                 allow_revoting: false,
                 only_members_execute: true,
                 close_proposal_on_execution_failure: false,
+                allowed_proposal_types: AllowedProposalTypes::All,
                 pre_propose_info: PreProposeInfo::ModuleMayPropose {
                     info: ModuleInstantiateInfo {
                         code_id: chain.orc.contract_map.code_id("dao_pre_propose_single")?,

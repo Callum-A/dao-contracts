@@ -9,6 +9,7 @@ use cw_denom::CheckedDenom;
 use dao_testing::{ShouldExecute, TestSingleChoiceVote};
 use dao_voting::{
     deposit::{CheckedDepositInfo, UncheckedDepositInfo},
+    proposal::AllowedProposalTypes,
     status::Status,
     threshold::Threshold,
 };
@@ -128,6 +129,7 @@ where
         allow_revoting: false,
         close_proposal_on_execution_failure: true,
         pre_propose_info,
+        allowed_proposal_types: AllowedProposalTypes::All,
     };
 
     let core_addr = setup_governance(&mut app, instantiate, Some(initial_balances));

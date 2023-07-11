@@ -15,6 +15,7 @@ use cosmwasm_std::{to_binary, Addr, CosmosMsg, Decimal, Uint128, WasmMsg};
 use cw20::Cw20Coin;
 use cw_multi_test::{next_block, App};
 use cw_utils::Duration;
+use dao_voting::proposal::AllowedProposalTypes;
 use dao_voting::{
     deposit::{DepositRefundPolicy, UncheckedDepositInfo},
     status::Status,
@@ -177,6 +178,7 @@ pub fn test_executed_prop_state_remains_after_vote_swing() {
             false,
         ),
         close_proposal_on_execution_failure: true,
+        allowed_proposal_types: AllowedProposalTypes::All,
     };
 
     let core_addr = instantiate_with_staked_balances_governance(
@@ -273,6 +275,7 @@ pub fn test_passed_prop_state_remains_after_vote_swing() {
             false,
         ),
         close_proposal_on_execution_failure: true,
+        allowed_proposal_types: AllowedProposalTypes::All,
     };
 
     let core_addr = instantiate_with_staked_balances_governance(

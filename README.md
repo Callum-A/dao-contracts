@@ -64,4 +64,4 @@ damages whatsoever associated with your use, inability to use, or your
 interaction with other users of DAO DAO tooling, including any direct,
 indirect, incidental, special, exemplary, punitive or consequential
 damages, or loss of profits, cryptocurrencies, tokens, or anything
-else of value.
+else of value. 

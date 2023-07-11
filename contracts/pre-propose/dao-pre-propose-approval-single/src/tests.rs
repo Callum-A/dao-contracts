@@ -9,6 +9,7 @@ use dao_interface::state::{Admin, ModuleInstantiateInfo};
 use dao_pre_propose_base::{error::PreProposeError, msg::DepositInfoResponse, state::Config};
 use dao_proposal_single::query::ProposalResponse;
 use dao_testing::helpers::instantiate_with_cw4_groups_governance;
+use dao_voting::proposal::AllowedProposalTypes;
 use dao_voting::{
     deposit::{CheckedDepositInfo, DepositRefundPolicy, DepositToken, UncheckedDepositInfo},
     pre_propose::{PreProposeInfo, ProposalCreationPolicy},
@@ -75,6 +76,7 @@ fn get_default_proposal_module_instantiate(
             },
         },
         close_proposal_on_execution_failure: false,
+        allowed_proposal_types: AllowedProposalTypes::All,
     }
 }
 
@@ -1204,6 +1206,7 @@ fn test_instantiate_with_zero_native_deposit() {
                 },
             },
             close_proposal_on_execution_failure: false,
+            allowed_proposal_types: AllowedProposalTypes::All,
         }
     };
 
@@ -1267,6 +1270,7 @@ fn test_instantiate_with_zero_cw20_deposit() {
                 },
             },
             close_proposal_on_execution_failure: false,
+            allowed_proposal_types: AllowedProposalTypes::All,
         }
     };
 

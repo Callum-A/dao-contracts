@@ -4,6 +4,7 @@ use cosm_orc::{config::cfg::Config, orchestrator::cosm_orc::CosmOrc};
 use cosmwasm_std::{to_binary, Decimal, Empty, Uint128};
 use cw20::Cw20Coin;
 use dao_interface::state::{Admin, ModuleInstantiateInfo};
+use dao_voting::proposal::AllowedProposalTypes;
 use dao_voting::{
     deposit::{DepositRefundPolicy, DepositToken, UncheckedDepositInfo},
     pre_propose::PreProposeInfo,
@@ -105,6 +106,7 @@ fn main() -> Result<()> {
                     },
                 },
                 close_proposal_on_execution_failure: false,
+                allowed_proposal_types: AllowedProposalTypes::All,
             })?,
             admin: Some(Admin::CoreModule {}),
             label: "DAO DAO Proposal Module".to_string(),

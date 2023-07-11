@@ -13,7 +13,7 @@ use dao_voting::{
 
 use crate::msg::{CountResponse, InstantiateMsg, QueryMsg};
 use dao_proposal_single::state::Config;
-use dao_voting::proposal::SingleChoiceProposeMsg as ProposeMsg;
+use dao_voting::proposal::{AllowedProposalTypes, SingleChoiceProposeMsg as ProposeMsg};
 
 const CREATOR_ADDR: &str = "creator";
 
@@ -153,6 +153,7 @@ fn test_counters() {
         allow_revoting: false,
         pre_propose_info: PreProposeInfo::AnyoneMayPropose {},
         close_proposal_on_execution_failure: true,
+        allowed_proposal_types: AllowedProposalTypes::All,
     };
 
     let governance_addr =

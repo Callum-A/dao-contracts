@@ -16,6 +16,7 @@ use dao_pre_propose_approval_single::{
 use dao_pre_propose_base::{error::PreProposeError, msg::DepositInfoResponse, state::Config};
 use dao_proposal_single as cps;
 use dao_testing::helpers::instantiate_with_cw4_groups_governance;
+use dao_voting::proposal::AllowedProposalTypes;
 use dao_voting::{
     deposit::{CheckedDepositInfo, DepositRefundPolicy, DepositToken, UncheckedDepositInfo},
     pre_propose::{PreProposeInfo, ProposalCreationPolicy},
@@ -99,6 +100,7 @@ fn get_proposal_module_approval_single_instantiate(
             },
         },
         close_proposal_on_execution_failure: false,
+        allowed_proposal_types: AllowedProposalTypes::All,
     }
 }
 
@@ -130,6 +132,7 @@ fn get_proposal_module_approver_instantiate(
             },
         },
         close_proposal_on_execution_failure: false,
+        allowed_proposal_types: AllowedProposalTypes::All,
     }
 }
 

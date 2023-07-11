@@ -1,6 +1,7 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cw_utils::Duration;
 use dao_dao_macros::proposal_module_query;
+use dao_voting::proposal::AllowedProposalTypes;
 use dao_voting::{
     pre_propose::PreProposeInfo, proposal::SingleChoiceProposeMsg, threshold::Threshold,
     voting::Vote,
@@ -38,6 +39,8 @@ pub struct InstantiateMsg {
     /// remain open until the DAO's treasury was large enough for it to be
     /// executed.
     pub close_proposal_on_execution_failure: bool,
+    /// Allowed proposal types.
+    pub allowed_proposal_types: AllowedProposalTypes,
 }
 
 #[cw_serde]
@@ -110,6 +113,8 @@ pub enum ExecuteMsg {
         /// remain open until the DAO's treasury was large enough for it to be
         /// executed.
         close_proposal_on_execution_failure: bool,
+        /// Allowed proposal types
+        allowed_proposal_types: AllowedProposalTypes,
     },
     /// Update's the proposal creation policy used for this
     /// module. Only the DAO may call this method.
