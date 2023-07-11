@@ -5,6 +5,15 @@ use cosmwasm_std::{CosmosMsg, Empty};
 pub const DEFAULT_LIMIT: u64 = 30;
 pub const MAX_PROPOSAL_SIZE: u64 = 30_000;
 
+/// Limit what type of messages can be attached to proposals
+#[cw_serde]
+pub enum AllowedProposalTypes {
+    /// Any type of `CosmosMsg`.
+    All,
+    /// No `CosmosMsg` just text.
+    Text,
+}
+
 /// The contents of a message to create a proposal in the single
 /// choice proposal module.
 ///

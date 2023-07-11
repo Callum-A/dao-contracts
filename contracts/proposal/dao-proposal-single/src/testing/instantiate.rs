@@ -10,6 +10,7 @@ use dao_pre_propose_single as cppbps;
 use dao_voting::{
     deposit::{DepositRefundPolicy, UncheckedDepositInfo},
     pre_propose::PreProposeInfo,
+    proposal::AllowedProposalTypes,
     threshold::{PercentageThreshold, Threshold::ThresholdQuorum},
 };
 
@@ -66,6 +67,7 @@ pub(crate) fn get_default_token_dao_proposal_module_instantiate(app: &mut App) -
             false,
         ),
         close_proposal_on_execution_failure: true,
+        allowed_proposal_types: AllowedProposalTypes::All,
     }
 }
 
@@ -84,6 +86,7 @@ pub(crate) fn get_default_non_token_dao_proposal_module_instantiate(
         allow_revoting: false,
         pre_propose_info: get_pre_propose_info(app, None, false),
         close_proposal_on_execution_failure: true,
+        allowed_proposal_types: AllowedProposalTypes::All,
     }
 }
 

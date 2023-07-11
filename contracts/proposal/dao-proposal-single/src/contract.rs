@@ -14,7 +14,7 @@ use dao_proposal_hooks::{new_proposal_hooks, proposal_status_changed_hooks};
 use dao_vote_hooks::new_vote_hooks;
 use dao_voting::pre_propose::{PreProposeInfo, ProposalCreationPolicy};
 use dao_voting::proposal::{
-    SingleChoiceProposeMsg as ProposeMsg, DEFAULT_LIMIT, MAX_PROPOSAL_SIZE,
+    AllowedProposalTypes, SingleChoiceProposeMsg as ProposeMsg, DEFAULT_LIMIT, MAX_PROPOSAL_SIZE,
 };
 use dao_voting::reply::{
     failed_pre_propose_module_hook_id, mask_proposal_execution_proposal_id, TaggedReplyId,
@@ -74,6 +74,7 @@ pub fn instantiate(
         dao: dao.clone(),
         allow_revoting: msg.allow_revoting,
         close_proposal_on_execution_failure: msg.close_proposal_on_execution_failure,
+        allowed_proposal_types: msg.allowed_proposal_types,
     };
 
     // Initialize proposal count to zero so that queries return zero
@@ -121,6 +122,7 @@ pub fn execute(
             allow_revoting,
             dao,
             close_proposal_on_execution_failure,
+            allowed_proposal_types,
         } => execute_update_config(
             deps,
             info,
@@ -131,6 +133,7 @@ pub fn execute(
             allow_revoting,
             dao,
             close_proposal_on_execution_failure,
+            allowed_proposal_types,
         ),
         ExecuteMsg::UpdatePreProposeInfo { info: new_info } => {
             execute_update_proposal_creation_policy(deps, info, new_info)
@@ -144,6 +147,21 @@ pub fn execute(
         ExecuteMsg::AddVoteHook { address } => execute_add_vote_hook(deps, env, info, address),
         ExecuteMsg::RemoveVoteHook { address } => {
             execute_remove_vote_hook(deps, env, info, address)
+        }
+    }
+}
+
+fn validate_allowed_proposal_type(
+    config: &Config,
+    msgs: &Vec<CosmosMsg<Empty>>,
+) -> Result<(), ContractError> {
+    match config.allowed_proposal_types {
+        AllowedProposalTypes::All => Ok(()),
+        AllowedProposalTypes::Text => {
+            if msgs.is_empty() {
+                return Ok(());
+            }
+            Err(ContractError::Unauthorized {})
         }
     }
 }
@@ -164,6 +182,7 @@ pub fn execute_propose(
     if !proposal_creation_policy.is_permitted(&sender) {
         return Err(ContractError::Unauthorized {});
     }
+    validate_allowed_proposal_type(&config, &msgs)?;
 
     // Determine the appropriate proposer. If this is coming from our
     // pre-propose module, it must be specified. Otherwise, the
@@ -550,6 +569,7 @@ pub fn execute_update_config(
     allow_revoting: bool,
     dao: String,
     close_proposal_on_execution_failure: bool,
+    allowed_proposal_types: AllowedProposalTypes,
 ) -> Result<Response, ContractError> {
     let config = CONFIG.load(deps.storage)?;
 
@@ -573,6 +593,7 @@ pub fn execute_update_config(
             allow_revoting,
             dao,
             close_proposal_on_execution_failure,
+            allowed_proposal_types,
         },
     )?;
 
@@ -880,6 +901,7 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, Co
                     allow_revoting: current_config.allow_revoting,
                     dao: current_config.dao.clone(),
                     close_proposal_on_execution_failure,
+                    allowed_proposal_types: AllowedProposalTypes::All,
                 },
             )?;
 

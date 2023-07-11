@@ -3,6 +3,7 @@ use cosmwasm_std::{Addr, Uint128};
 use cw_hooks::Hooks;
 use cw_storage_plus::{Item, Map};
 use cw_utils::Duration;
+use dao_voting::proposal::AllowedProposalTypes;
 use dao_voting::{pre_propose::ProposalCreationPolicy, threshold::Threshold, voting::Vote};
 
 use crate::proposal::SingleChoiceProposal;
@@ -55,6 +56,8 @@ pub struct Config {
     /// remain open until the DAO's treasury was large enough for it to be
     /// executed.
     pub close_proposal_on_execution_failure: bool,
+    /// Allowed proposal types.
+    pub allowed_proposal_types: AllowedProposalTypes,
 }
 
 /// The current top level config for the module.  The "config" key was
